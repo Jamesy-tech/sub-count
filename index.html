@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sub Count Notifier</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1 id="subs">Loading...</h1>
+    <p id="countdown"></p>
+
+    <script>
+        const apiKey = "AIzaSyAHwcEU_hm_L7zJ65S16GqBX_vJ2_sS02I";
+        const channelId = "UCBeRITLbzQs2WLP1U7vJ3SQ";
+
+        // CHECK EVERY ___ SECONDS (testing = 120 sec / 2 minutes)
+        const CHECK_INTERVAL = 10; 
+        let timeLeft = CHECK_INTERVAL;
+        let lastSubCount = null;
+
+        // Ask for notification permission
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        async function loadSubs() {
+            const url =
+                `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const subs = data.items[0].statistics.subscriberCount;
+
+                document.getElementById("subs").textContent =
+                    "Subscribers: " + subs;
+
+                // Send notification if sub count changed
+                if (lastSubCount !== null && subs !== lastSubCount) {
+                    new Notification("Sub Count Update", {
+                        body: `You now have ${subs} subscribers.`,
+                    });
+                }
+
+                lastSubCount = subs;
+            } catch (err) {
+                document.getElementById("subs").textContent = "Error loading sub count";
+            }
+        }
+
+        function updateCountdown() {
+            document.getElementById("countdown").textContent =
+                "Next check in: " + timeLeft + "s";
+
+            timeLeft--;
+
+            if (timeLeft < 0) {
+                loadSubs();
+                timeLeft = CHECK_INTERVAL;
+            }
+        }
+
+        // Initial load
+        loadSubs();
+
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
