@@ -11,6 +11,29 @@
     <p id="countdown"></p>
     <p id="debug"></p>
 
+    <button id="installBtn" style="display:none;">Install App</button>
+
+<script>
+let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+});
+
+installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('Install result:', outcome);
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+    }
+});
+</script>
+
     <script>
         const apiKey = "AIzaSyAHwcEU_hm_L7zJ65S16GqBX_vJ2_sS02I";
         const channelId = "UCBeRITLbzQs2WLP1U7vJ3SQ";
