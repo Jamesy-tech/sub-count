@@ -26,7 +26,7 @@
                 document.getElementById("subs").textContent = "Subscribers: " + subs;
 
                 if (Notification.permission === "granted") {
-                    new Notification("Sub Count Update", { body: `You now have ${subs} subscribers.` });
+                    new Notification("JamesyDeveloper - YT", { body: `You now have ${subs} subscribers.` });
                     document.getElementById("debug").textContent = "Notification sent successfully";
                 } else {
                     document.getElementById("debug").textContent = "Notification blocked or permission not granted";
