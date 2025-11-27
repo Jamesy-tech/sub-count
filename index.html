@@ -82,10 +82,19 @@ loadSubs();
 setInterval(updateCountdown, 1000);
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-        .then(() => console.log('Service Worker registered'))
-        .catch(err => console.log('Service Worker failed:', err));
+    navigator.serviceWorker.ready.then(swReg => {
+        if (swReg.active) {
+            swReg.active.postMessage({
+                title: "JamesyDeveloper - YT",
+                body: `You now have ${subs} subscribers.`
+            });
+            document.getElementById("debug").textContent = "Notification sent via SW";
+        } else {
+            document.getElementById("debug").textContent = "Service Worker not active yet";
+        }
+    });
 }
+
 </script>
 </body>
 </html>
