@@ -3,6 +3,8 @@
 <head>
     <title>Sub Count Notifier</title>
     <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a73e8">
 </head>
 <body>
     <h1 id="subs">Loading...</h1>
@@ -56,5 +58,14 @@
         loadSubs();
         setInterval(updateCountdown, 1000);
     </script>
+
+    <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('Service Worker registered'))
+    .catch(err => console.log('Service Worker failed:', err));
+}
+</script>
+
 </body>
 </html>
