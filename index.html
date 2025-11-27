@@ -1,28 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Sub Count Notifier</title>
     <meta charset="UTF-8">
+    <title>Jamesy Sub Counter</title>
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a73e8">
+    <meta name="theme-color" content="#1a73e8">
 </head>
 <body>
     <h1 id="subs">Loading...</h1>
     <p id="countdown"></p>
     <p id="debug"></p>
-
     <button id="installBtn" style="display:none;">Install App</button>
 
 <script>
+const apiKey = "AIzaSyAHwcEU_hm_L7zJ65S16GqBX_vJ2_sS02I";
+const channelId = "UCBeRITLbzQs2WLP1U7vJ3SQ";
+const CHECK_INTERVAL = 120;
+let timeLeft = CHECK_INTERVAL;
+let lastSubCount = null;
+
 let deferredPrompt;
 const installBtn = document.getElementById('installBtn');
-
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     installBtn.style.display = 'inline-block';
 });
-
 installBtn.addEventListener('click', async () => {
     if (deferredPrompt) {
         deferredPrompt.prompt();
@@ -32,63 +35,57 @@ installBtn.addEventListener('click', async () => {
         installBtn.style.display = 'none';
     }
 });
-</script>
 
-    <script>
-        const apiKey = "AIzaSyAHwcEU_hm_L7zJ65S16GqBX_vJ2_sS02I";
-        const channelId = "UCBeRITLbzQs2WLP1U7vJ3SQ";
-        const CHECK_INTERVAL = 120;
-        let timeLeft = CHECK_INTERVAL;
-        let lastSubCount = null;
+if (Notification.permission !== "granted") {
+    Notification.requestPermission().then(p => {
+        if (p !== "granted") document.getElementById("debug").textContent = "Notifications not allowed";
+    });
+}
 
-        async function loadSubs() {
-            try {
-                const url = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`;
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("HTTP error " + res.status);
-                const data = await res.json();
-                const subs = data.items[0].statistics.subscriberCount;
-                document.getElementById("subs").textContent = "Subscribers: " + subs;
+async function loadSubs() {
+    try {
+        const url = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("HTTP error " + res.status);
+        const data = await res.json();
+        const subs = data.items[0].statistics.subscriberCount;
+        document.getElementById("subs").textContent = "Subscribers: " + subs;
 
-                if (Notification.permission === "granted") {
-                    new Notification("JamesyDeveloper - YT", { body: `You now have ${subs} subscribers.` });
-                    document.getElementById("debug").textContent = "Notification sent successfully";
-                } else {
-                    document.getElementById("debug").textContent = "Notification blocked or permission not granted";
-                }
-
-                lastSubCount = subs;
-            } catch (err) {
-                document.getElementById("debug").textContent = "Error fetching sub count: " + err;
-            }
-        }
-
-        function updateCountdown() {
-            document.getElementById("countdown").textContent = "Next check in: " + timeLeft + "s";
-            timeLeft--;
-            if (timeLeft < 0) {
-                loadSubs();
-                timeLeft = CHECK_INTERVAL;
-            }
-        }
-
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission().then(p => {
-                if (p !== "granted") document.getElementById("debug").textContent = "Notifications not allowed";
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(swReg => {
+                swReg.active.postMessage({
+                    title: "JamesyDeveloper - YT",
+                    body: `You now have ${subs} subscribers.`
+                });
+                document.getElementById("debug").textContent = "Notification sent via SW";
             });
+        } else {
+            document.getElementById("debug").textContent = "Service Worker not ready";
         }
 
-        loadSubs();
-        setInterval(updateCountdown, 1000);
-    </script>
+        lastSubCount = subs;
+    } catch (err) {
+        document.getElementById("debug").textContent = "Error fetching sub count: " + err;
+    }
+}
 
-    <script>
+function updateCountdown() {
+    document.getElementById("countdown").textContent = "Next check in: " + timeLeft + "s";
+    timeLeft--;
+    if (timeLeft < 0) {
+        loadSubs();
+        timeLeft = CHECK_INTERVAL;
+    }
+}
+
+loadSubs();
+setInterval(updateCountdown, 1000);
+
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log('Service Worker registered'))
-    .catch(err => console.log('Service Worker failed:', err));
+    navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker registered'))
+        .catch(err => console.log('Service Worker failed:', err));
 }
 </script>
-
 </body>
 </html>
